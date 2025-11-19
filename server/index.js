@@ -52,13 +52,29 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// User agent logging to debug bot detection
+// Enhanced user agent logging middleware
 app.use((req, res, next) => {
   const userAgent = req.headers['user-agent'] || '';
   const isBot = /bot|facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|facebot|ia_archiver/i.test(userAgent);
   
-  console.log('User-Agent:', userAgent);
-  console.log('Is Bot:', isBot);
+  // Enhanced logging with timestamp and request details
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.originalUrl,
+    userAgent: userAgent,
+    isBot: isBot,
+    ip: req.ip || req.connection.remoteAddress,
+    headers: {
+      'accept': req.headers['accept'],
+      'x-forwarded-for': req.headers['x-forwarded-for']
+    }
+  };
+  
+  // Log to console (will appear in Vercel logs)
+  console.log('--- Request Log ---');
+  console.log(JSON.stringify(logEntry, null, 2));
+  console.log('-------------------');
   
   // Add bot info to request object
   req.isBot = isBot;

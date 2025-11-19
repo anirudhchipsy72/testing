@@ -3,8 +3,12 @@ import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import ShareButton from './components/ShareButton';
 import PostShareMeta from './components/PostShareMeta';
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testing-mdd37kpsq-yoyomaster12s-projects.vercel.app/api' 
+  : 'http://localhost:5000/api';
 
 function App() {
+
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ username: '', content: '', image: null });
   const [previewImage, setPreviewImage] = useState(null);
@@ -16,7 +20,7 @@ function App() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/posts');
+        const response = await fetch(`${API_BASE_URL}/posts`);
         const data = await response.json();
         setPosts(data);
       } catch (error) {
@@ -41,7 +45,7 @@ function App() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/posts', {
+      const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         body: formData,
       });

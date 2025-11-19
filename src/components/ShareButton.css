@@ -1,0 +1,42 @@
+.share-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.share-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color);
+}
+
+.share-button:active {
+  transform: translateY(1px);
+}
+
+.share-icon,
+.whatsapp-icon {
+  font-size: 1rem;
+}
+
+.whatsapp-icon {
+  color: #25D366; /* WhatsApp brand color */
+}
+
+/* Add to existing App.css */
+.post-actions {
+  display: flex;
+  gap: 15px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}

@@ -273,6 +273,24 @@ app.get('/post/:id', async (req, res) => {
   }
 });
 
+// Test endpoint to verify logging
+app.get('/test-logging', (req, res) => {
+  const userAgent = req.headers['user-agent'] || '';
+  const isBot = /whatsapp/i.test(userAgent);
+  
+  console.log('--- Test Log ---');
+  console.log('User-Agent:', userAgent);
+  console.log('Is WhatsApp Bot:', isBot);
+  console.log('----------------');
+  
+  res.json({
+    success: true,
+    userAgent,
+    isWhatsAppBot: isBot,
+    message: 'Check your server logs for the test output'
+  });
+});
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);

@@ -210,7 +210,7 @@ function App() {
                 {post.imageUrl && (
                   <div className="post-image">
                     <img 
-                      src={`http://localhost:5000${post.imageUrl}`} 
+                      src={`${process.env.NODE_ENV === 'production' ? 'https://testing-lfj5h1af2-yoyomaster12s-projects.vercel.app' : 'http://localhost:5000'}${post.imageUrl}`} 
                       alt="Post content" 
                       onError={(e) => {
                         e.target.style.display = 'none';

@@ -19,12 +19,15 @@
       "dest": "/server/index.js"
     },
     {
-      "src": "^/static/(.*)",
+      "src": "/static/(.*)",
       "dest": "/static/$1"
     },
     {
-      "src": "^/(.*)",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

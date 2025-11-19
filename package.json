@@ -4,19 +4,19 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=14.x",
-    "npm": ">=6.0.0"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
+    "prebuild": "rimraf dist",
+    "preview": "vite preview --port 3000",
+    "start": "vite preview --port 3000",
     "server": "node server/index.js",
     "dev:fullstack": "concurrently \"npm run dev\" \"npm run server\"",
-    "start": "node server/index.js",
     "vercel-build": "npm run build",
-    "ngrok": "ngrok http 5000"
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
     "@vercel/node": "^4.0.0",

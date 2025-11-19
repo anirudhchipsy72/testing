@@ -44,13 +44,42 @@ const upload = multer({
 });
 
 // Middleware
+app.use((req, res, next) => {
+  // CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  
+  // Cache control for static files
+  if (req.path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  
+  next();
+});
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   optionsSuccessStatus: 200
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(uploadsDir));
+
+app.use('/uploads', express.static('public/uploads', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.set('Content-Type', 'image/jpeg');
+    } else if (path.endsWith('.png')) {
+      res.set('Content-Type', 'image/png');
+    } else if (path.endsWith('.gif')) {
+      res.set('Content-Type', 'image/gif');
+    } else if (path.endsWith('.webp')) {
+      res.set('Content-Type', 'image/webp');
+    }
+  }
+}));
 
 // Mock database
 let posts = [

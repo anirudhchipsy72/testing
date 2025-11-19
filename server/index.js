@@ -52,6 +52,20 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
+// User agent logging to debug bot detection
+app.use((req, res, next) => {
+  const userAgent = req.headers['user-agent'] || '';
+  const isBot = /bot|facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|facebot|ia_archiver/i.test(userAgent);
+  
+  console.log('User-Agent:', userAgent);
+  console.log('Is Bot:', isBot);
+  
+  // Add bot info to request object
+  req.isBot = isBot;
+  
+  next();
+});
+
 // Parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -182,6 +196,9 @@ app.post('/api/posts/:id/like', (req, res) => {
 // Add this route before the 404 handler
 app.get('/post/:id', async (req, res) => {
   try {
+    console.log('Bot detection - Is Bot:', req.isBot);
+    console.log('Request Headers:', req.headers);
+    
     const postId = req.params.id;
     const post = posts.find(p => p.id === postId);
     

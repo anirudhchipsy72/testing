@@ -13,177 +13,120 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Create uploads directory if it doesn't exist
+// =========================
+// UPLOADS FOLDER
+// =========================
 const uploadsDir = process.env.UPLOAD_DIR || join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for file uploads
+// =========================
+// MULTER CONFIG
+// =========================
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
+  destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = file.originalname.split('.').pop();
-    cb(null, `${uniqueSuffix}.${ext}`);
-  },
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`);
+  }
 });
 
 const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
+  storage,
+  fileFilter: (_, file, cb) => {
+    file.mimetype.startsWith("image/")
+      ? cb(null, true)
+      : cb(new Error("Only image files allowed"), false);
   },
-  limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 },
+  limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 }
 });
 
-// Middleware
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
-// Enhanced user agent logging middleware
-app.use((req, res, next) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const isBot = /bot|facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|facebot|ia_archiver/i.test(userAgent);
-  
-  // Enhanced logging with timestamp and request details
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    url: req.originalUrl,
-    userAgent: userAgent,
-    isBot: isBot,
-    ip: req.ip || req.connection.remoteAddress,
-    headers: {
-      'accept': req.headers['accept'],
-      'x-forwarded-for': req.headers['x-forwarded-for']
-    }
-  };
-  
-  // Log to console (will appear in Vercel logs)
-  console.log('--- Request Log ---');
-  console.log(JSON.stringify(logEntry, null, 2));
-  console.log('-------------------');
-  
-  // Add bot info to request object
-  req.isBot = isBot;
-  
-  next();
-});
-
-// Parse JSON bodies
+// =========================
+// GLOBAL MIDDLWARES
+// =========================
+app.use(cors({ origin: "*", methods: "GET,POST" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files with proper headers
-app.use('/uploads', express.static('public/uploads', {
-  setHeaders: (res, path) => {
-    // Set CORS headers for all static files
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    
-    // Set content type based on file extension
-    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
-      res.set('Content-Type', 'image/jpeg');
-    } else if (path.endsWith('.png')) {
-      res.set('Content-Type', 'image/png');
-    } else if (path.endsWith('.gif')) {
-      res.set('Content-Type', 'image/gif');
-    } else if (path.endsWith('.webp')) {
-      res.set('Content-Type', 'image/webp');
-    }
-    
-    // Cache control for images
-    if (path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-      res.set('Cache-Control', 'public, max-age=31536000, immutable');
-    } else {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-  }
-}));
+// =========================
+// BOT DETECTION LOGGER
+// =========================
+app.use((req, res, next) => {
+  const userAgent = req.headers["user-agent"] || "";
 
-// Mock database
+  const isBot = /bot|facebookexternalhit|twitterbot|whatsapp|linkedinbot|pinterest|slackbot|telegrambot|discordbot|googlebot|bingbot|duckduckbot|baiduspider|yandexbot|facebot/i.test(
+    userAgent
+  );
+
+  const logEntry = {
+    url: req.originalUrl,
+    method: req.method,
+    userAgent,
+    isBot,
+    ip: req.ip,
+  };
+
+  console.info("REQUEST:", JSON.stringify(logEntry, null, 2));
+
+  req.isBot = isBot;
+  next();
+});
+
+// =========================
+// STATIC FILES
+// =========================
+app.use("/uploads", express.static("public/uploads"));
+
+// =========================
+// MOCK DATABASE
+// =========================
 let posts = [
   {
-    id: '1',
-    username: 'johndoe',
-    content: 'Just set up my new React app with Express backend! #coding #react',
+    id: "1",
+    username: "johndoe",
+    content: "My first post!",
     imageUrl: null,
     likes: 10,
     comments: [],
     createdAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    username: 'janedoe',
-    content: 'Learning full-stack development is exciting!',
-    imageUrl: null,
-    likes: 5,
-    comments: [
-      { id: '1', username: 'johndoe', text: 'Keep it up!', createdAt: new Date().toISOString() }
-    ],
-    createdAt: new Date(Date.now() - 3600000).toISOString()
   }
 ];
 
-// Get all posts
-app.get('/api/posts', (req, res) => {
-  res.json(posts);
+// =========================
+// GET ALL POSTS
+// =========================
+app.get("/api/posts", (req, res) => res.json(posts));
+
+// =========================
+// ADD POST
+// =========================
+app.post("/api/posts", upload.single("image"), (req, res) => {
+  const { username, content } = req.body;
+
+  const newPost = {
+    id: uuidv4(),
+    username,
+    content,
+    imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+    likes: 0,
+    comments: [],
+    createdAt: new Date().toISOString()
+  };
+
+  posts = [newPost, ...posts];
+  res.status(201).json(newPost);
 });
 
-// Create a new post with image
-app.post('/api/posts', upload.single('image'), (req, res) => {
-  try {
-    const { username, content } = req.body;
-    
-    if (!username || !content) {
-      return res.status(400).json({ error: 'Username and content are required' });
-    }
-
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-    const newPost = {
-      id: uuidv4(),
-      username,
-      content,
-      imageUrl,
-      likes: 0,
-      comments: [],
-      createdAt: new Date().toISOString()
-    };
-
-    posts = [newPost, ...posts];
-    res.status(201).json(newPost);
-  } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ error: 'Failed to create post' });
-  }
-});
-
-// Add a comment to a post
-app.post('/api/posts/:id/comments', (req, res) => {
+// =========================
+// ADD COMMENT
+// =========================
+app.post("/api/posts/:id/comments", (req, res) => {
   const { id } = req.params;
   const { username, text } = req.body;
 
-  if (!username || !text) {
-    return res.status(400).json({ error: 'Username and text are required' });
-  }
-
   const post = posts.find(p => p.id === id);
-  if (!post) {
-    return res.status(404).json({ error: 'Post not found' });
-  }
+  if (!post) return res.status(404).json({ error: "Post not found" });
 
   const newComment = {
     id: uuidv4(),
@@ -196,120 +139,67 @@ app.post('/api/posts/:id/comments', (req, res) => {
   res.status(201).json(newComment);
 });
 
-// Like a post
-app.post('/api/posts/:id/like', (req, res) => {
-  const { id } = req.params;
-  const post = posts.find(p => p.id === id);
-  
-  if (!post) {
-    return res.status(404).json({ error: 'Post not found' });
-  }
+// =========================
+// LIKE POST
+// =========================
+app.post("/api/posts/:id/like", (req, res) => {
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.status(404).json({ error: "Post not found" });
 
   post.likes += 1;
   res.json({ likes: post.likes });
 });
 
-// Add this route before the 404 handler
-app.get('/post/:id', async (req, res) => {
-  try {
-    console.log('Bot detection - Is Bot:', req.isBot);
-    console.log('Request Headers:', req.headers);
-    
-    const postId = req.params.id;
-    const post = posts.find(p => p.id === postId);
-    
-    if (!post) {
-      return res.status(404).send('Post not found');
-    }
+// =========================
+// OG META SHARE PAGE
+// =========================
+app.get("/post/:id", (req, res) => {
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.status(404).send("Post not found");
 
-    const imageUrl = post.imageUrl 
-      ? `https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app${
-          post.imageUrl.startsWith('/') ? '' : '/'
-        }${post.imageUrl}`
-      : '';
+  // FULL https URL for OG image
+  const fullImageUrl = post.imageUrl
+    ? `https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app${post.imageUrl}`
+    : "";
 
-    const html = `
+  const html = `
     <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Post by ${post.username}</title>
-      <meta name="description" content="${post.content.substring(0, 155)}...">
-      
-      <!-- Open Graph / Facebook -->
-      <meta property="og:type" content="website">
-      <meta property="og:url" content="https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app/post/${post.id}">
-      <meta property="og:title" content="Post by ${post.username}">
-      <meta property="og:description" content="${post.content.substring(0, 155)}...">
-      ${imageUrl ? `
-      <meta property="og:image" content="${imageUrl}">
-      <meta property="og:image:width" content="1200">
-      <meta property="og:image:height" content="630">
-      ` : ''}
-      
-      <!-- Twitter -->
-      <meta name="twitter:card" content="summary_large_image">
-      <meta name="twitter:title" content="Post by ${post.username}">
-      <meta name="twitter:description" content="${post.content.substring(0, 200)}...">
-      ${imageUrl ? `<meta name="twitter:image" content="${imageUrl}">` : ''}
-      
-      <!-- Redirect to the actual post in the SPA -->
-      <meta http-equiv="refresh" content="0;url=/?postId=${post.id}">
-    </head>
-    <body>
-      <p>Redirecting to post...</p>
-      <script>
-        window.location.href = "/?postId=${post.id}";
-      </script>
-    </body>
+    <html>
+      <head>
+        <title>Post by ${post.username}</title>
+        <meta property="og:title" content="Post by ${post.username}">
+        <meta property="og:description" content="${post.content}">
+        ${fullImageUrl ? `<meta property="og:image" content="${fullImageUrl}">` : ""}
+        <meta property="og:type" content="website">
+
+        <meta name="twitter:card" content="summary_large_image">
+        ${fullImageUrl ? `<meta name="twitter:image" content="${fullImageUrl}">` : ""}
+      </head>
+      <body>Loading...</body>
     </html>
-    `;
+  `;
 
-    res.send(html);
-  } catch (error) {
-    console.error('Error generating post page:', error);
-    res.status(500).send('Internal Server Error');
+  // BOT = send meta tags
+  if (req.isBot) {
+    console.info("BOT detected → Sending meta tags");
+    return res.send(html);
   }
+
+  // HUMAN = redirect normally
+  console.info("Human → Redirecting to SPA");
+  return res.redirect(`/?postId=${post.id}`);
 });
 
-// Test endpoint to verify logging
-app.get('/test-logging', (req, res) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const isBot = /whatsapp/i.test(userAgent);
-  
-  console.log('--- Test Log ---');
-  console.log('User-Agent:', userAgent);
-  console.log('Is WhatsApp Bot:', isBot);
-  console.log('----------------');
-  
-  res.json({
-    success: true,
-    userAgent,
-    isWhatsAppBot: isBot,
-    message: 'Check your server logs for the test output'
-  });
-});
+// =========================
+// 404 HANDLER
+// =========================
+app.use((req, res) => res.status(404).json({ error: "Not found" }));
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
-  res.status(500).json({ 
-    error: 'Something went wrong!',
-    message: err.message 
-  });
-});
-
-// Handle 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-// Start server only when not in Vercel environment
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+// =========================
+// START SERVER
+// =========================
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => console.log("Server running on port", PORT));
 }
 
 export default app;

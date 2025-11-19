@@ -142,6 +142,11 @@ function App() {
 
   return (
     <HelmetProvider>
+      {posts.length > 0 && (
+        <PostShareMeta 
+          post={posts.find(p => p.id === selectedPost?.id) || posts[0]} 
+        />
+      )}
       <div className="app">
         <header className="app-header">
           <h1>Social Media App</h1>
@@ -201,7 +206,6 @@ function App() {
           <div className="posts">
             {posts.map((post) => (
               <div key={post.id} className="post">
-                {post.id === selectedPost?.id && <PostShareMeta post={post} />}
                 <div className="post-header">
                   <span className="username">@{post.username}</span>
                   <span className="post-time">{formatDate(post.createdAt)}</span>

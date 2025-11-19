@@ -44,31 +44,26 @@ const upload = multer({
 });
 
 // Middleware
-app.use((req, res, next) => {
-  // CORS headers
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  
-  // Cache control for static files
-  if (req.path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  } else {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  }
-  
-  next();
-});
-
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
   optionsSuccessStatus: 200
 }));
+
+// Parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files with proper headers
 app.use('/uploads', express.static('public/uploads', {
   setHeaders: (res, path) => {
+    // Set CORS headers for all static files
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    
+    // Set content type based on file extension
     if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
       res.set('Content-Type', 'image/jpeg');
     } else if (path.endsWith('.png')) {
@@ -77,6 +72,13 @@ app.use('/uploads', express.static('public/uploads', {
       res.set('Content-Type', 'image/gif');
     } else if (path.endsWith('.webp')) {
       res.set('Content-Type', 'image/webp');
+    }
+    
+    // Cache control for images
+    if (path.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
   }
 }));

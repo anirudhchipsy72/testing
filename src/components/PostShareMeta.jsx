@@ -1,23 +1,26 @@
 import { Helmet } from 'react-helmet-async';
+import { useEffect } from 'react';
 
 export default function PostShareMeta({ post }) {
   if (!post) return null;
 
+  // Log the post data for debugging
+  useEffect(() => {
+    console.log('Post data in PostShareMeta:', post);
+  }, [post]);
+
   // Use the correct domain based on environment
-  const domain = window.location.origin;
-  const isProduction = process.env.NODE_ENV === 'production';
+  const domain = 'https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app';
   
-  // Construct the full image URL
+  // Construct the full image URL - ensure it's absolute
   let imageUrl = '';
   if (post.imageUrl) {
     if (post.imageUrl.startsWith('http')) {
       imageUrl = post.imageUrl;
+    } else if (post.imageUrl.startsWith('/')) {
+      imageUrl = `${domain}${post.imageUrl}`;
     } else {
-      // For local development, use localhost:5000 for the backend
-      const baseUrl = isProduction 
-        ? domain 
-        : 'http://localhost:5000';
-      imageUrl = `${baseUrl}${post.imageUrl.startsWith('/') ? '' : '/'}${post.imageUrl}`;
+      imageUrl = `${domain}/${post.imageUrl}`;
     }
   }
 
@@ -26,34 +29,15 @@ export default function PostShareMeta({ post }) {
   
   // Create title and description
   const title = `Post by ${post.username}`;
-  const description = post.content.length > 100 
+  const description = post.content && post.content.length > 100 
     ? `${post.content.substring(0, 100)}...` 
-    : post.content;
+    : post.content || 'Check out this post';
 
-  // WhatsApp requires specific image dimensions and format
-  const imageMeta = imageUrl ? (
-    <>
-      {/* Open Graph / Facebook */}
-      <meta property="og:image" content={imageUrl} />
-      <meta property="og:image:secure_url" content={imageUrl} />
-      <meta property="og:image:type" content="image/jpeg" />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={`Image shared by ${post.username}`} />
-      
-      {/* Additional WhatsApp specific tags */}
-      <meta property="og:image:url" content={imageUrl} />
-      <meta property="og:image:secure" content="true" />
-      
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:image" content={imageUrl} />
-      <meta name="twitter:image:src" content={imageUrl} />
-      <meta name="twitter:image:alt" content={`Image shared by ${post.username}`} />
-    </>
-  ) : (
-    <meta name="twitter:card" content="summary" />
-  );
+  // Log the generated URLs for debugging
+  useEffect(() => {
+    console.log('Generated image URL:', imageUrl);
+    console.log('Generated post URL:', postUrl);
+  }, [imageUrl, postUrl]);
 
   return (
     <Helmet>
@@ -68,18 +52,33 @@ export default function PostShareMeta({ post }) {
       <meta property="og:site_name" content="Social Media App" />
       
       {/* Image meta tags */}
-      {imageMeta}
+      {imageUrl && (
+        <>
+          <meta property="og:image" content={imageUrl} />
+          <meta property="og:image:secure_url" content={imageUrl} />
+          <meta property="og:image:type" content="image/jpeg" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={`Image shared by ${post.username}`} />
+          
+          {/* Twitter Card */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image" content={imageUrl} />
+          <meta name="twitter:image:src" content={imageUrl} />
+          <meta name="twitter:image:alt" content={`Image shared by ${post.username}`} />
+        </>
+      )}
       
       {/* Additional WhatsApp specific tags */}
       <meta property="og:locale" content="en_US" />
       <meta property="og:updated_time" content={new Date().toISOString()} />
       
-      {/* Cache busting for WhatsApp */}
+      {/* Cache busting */}
       <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
       <meta httpEquiv="Pragma" content="no-cache" />
       <meta httpEquiv="Expires" content="0" />
       
-      {/* Additional WhatsApp specific */}
+      {/* Additional meta tags */}
       <meta property="og:determiner" content="the" />
       <meta property="og:see_also" content={domain} />
       <meta property="article:author" content={post.username} />

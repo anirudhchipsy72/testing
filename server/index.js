@@ -7,6 +7,15 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 import 'dotenv/config';
 
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -54,32 +63,37 @@ app.use(cors({
 
 // Enhanced user agent logging middleware
 app.use((req, res, next) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const isBot = /bot|facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|facebot|ia_archiver/i.test(userAgent);
-  
-  // Enhanced logging with timestamp and request details
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    url: req.originalUrl,
-    userAgent: userAgent,
-    isBot: isBot,
-    ip: req.ip || req.connection.remoteAddress,
-    headers: {
-      'accept': req.headers['accept'],
-      'x-forwarded-for': req.headers['x-forwarded-for']
-    }
-  };
-  
-  // Log to console (will appear in Vercel logs)
-  console.log('--- Request Log ---');
-  console.log(JSON.stringify(logEntry, null, 2));
-  console.log('-------------------');
-  
-  // Add bot info to request object
-  req.isBot = isBot;
-  
-  next();
+  try {
+    const userAgent = req.headers['user-agent'] || '';
+    const isBot = /bot|facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|Pinterest|Slackbot|TelegramBot|Discordbot|Googlebot|Bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|facebot|ia_archiver/i.test(userAgent);
+    
+    // Enhanced logging with timestamp and request details
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.originalUrl,
+      userAgent: userAgent,
+      isBot: isBot,
+      ip: req.ip || req.connection.remoteAddress,
+      headers: {
+        'accept': req.headers['accept'],
+        'x-forwarded-for': req.headers['x-forwarded-for']
+      }
+    };
+    
+    // Log to console (will appear in Vercel logs)
+    console.log('--- Request Log ---');
+    console.log(JSON.stringify(logEntry, null, 2));
+    console.log('-------------------');
+    
+    // Add bot info to request object
+    req.isBot = isBot;
+    
+    next();
+  } catch (error) {
+    console.error('Error in request logging middleware:', error);
+    next(error);
+  }
 });
 
 // Parse JSON bodies
@@ -273,13 +287,10 @@ app.get('/post/:id', async (req, res) => {
   }
 });
 
-// Error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
-  res.status(500).json({ 
-    error: 'Something went wrong!',
-    message: err.message 
-  });
+  console.error('Error:', err.stack);
+  res.status(500).send('Something broke! Please check the server logs.');
 });
 
 // Handle 404

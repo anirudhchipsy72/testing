@@ -179,6 +179,67 @@ app.post('/api/posts/:id/like', (req, res) => {
   res.json({ likes: post.likes });
 });
 
+// Add this route before the 404 handler
+app.get('/post/:id', async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = posts.find(p => p.id === postId);
+    
+    if (!post) {
+      return res.status(404).send('Post not found');
+    }
+
+    const imageUrl = post.imageUrl 
+      ? `https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app${
+          post.imageUrl.startsWith('/') ? '' : '/'
+        }${post.imageUrl}`
+      : '';
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Post by ${post.username}</title>
+      <meta name="description" content="${post.content.substring(0, 155)}...">
+      
+      <!-- Open Graph / Facebook -->
+      <meta property="og:type" content="website">
+      <meta property="og:url" content="https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app/post/${post.id}">
+      <meta property="og:title" content="Post by ${post.username}">
+      <meta property="og:description" content="${post.content.substring(0, 155)}...">
+      ${imageUrl ? `
+      <meta property="og:image" content="${imageUrl}">
+      <meta property="og:image:width" content="1200">
+      <meta property="og:image:height" content="630">
+      ` : ''}
+      
+      <!-- Twitter -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="Post by ${post.username}">
+      <meta name="twitter:description" content="${post.content.substring(0, 200)}...">
+      ${imageUrl ? `<meta name="twitter:image" content="${imageUrl}">` : ''}
+      
+      <!-- Redirect to the actual post in the SPA -->
+      <meta http-equiv="refresh" content="0;url=/?postId=${post.id}">
+    </head>
+    <body>
+      <p>Redirecting to post...</p>
+      <script>
+        window.location.href = "/?postId=${post.id}";
+      </script>
+    </body>
+    </html>
+    `;
+
+    res.send(html);
+  } catch (error) {
+    console.error('Error generating post page:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);

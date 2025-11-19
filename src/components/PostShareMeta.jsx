@@ -4,52 +4,36 @@ import { useEffect } from 'react';
 export default function PostShareMeta({ post }) {
   if (!post) return null;
 
-  // Log the post data for debugging
-  useEffect(() => {
-    console.log('Post data in PostShareMeta:', post);
-  }, [post]);
-
-  // Use the correct domain based on environment
-  const domain = 'https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app';
+  // Use the server-rendered URL for sharing
+  const postUrl = `https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app/post/${post.id}`;
   
-  // Construct the full image URL - ensure it's absolute
+  // Construct the full image URL
   let imageUrl = '';
   if (post.imageUrl) {
     if (post.imageUrl.startsWith('http')) {
       imageUrl = post.imageUrl;
-    } else if (post.imageUrl.startsWith('/')) {
-      imageUrl = `${domain}${post.imageUrl}`;
     } else {
-      imageUrl = `${domain}/${post.imageUrl}`;
+      imageUrl = `https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app${post.imageUrl.startsWith('/') ? '' : '/'}${post.imageUrl}`;
     }
   }
 
-  // Construct the post URL with a timestamp to prevent caching
-  const postUrl = `${domain}/post/${post.id}?v=${new Date().getTime()}`;
-  
-  // Create title and description
   const title = `Post by ${post.username}`;
   const description = post.content && post.content.length > 100 
     ? `${post.content.substring(0, 100)}...` 
     : post.content || 'Check out this post';
 
-  // Log the generated URLs for debugging
-  useEffect(() => {
-    console.log('Generated image URL:', imageUrl);
-    console.log('Generated post URL:', postUrl);
-  }, [imageUrl, postUrl]);
-
   return (
     <Helmet>
+      {/* Standard meta tags */}
       <title>{title}</title>
       <meta name="description" content={description} />
+      <link rel="canonical" href={postUrl} />
       
       {/* Open Graph / Facebook */}
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
       <meta property="og:url" content={postUrl} />
       <meta property="og:type" content="article" />
-      <meta property="og:site_name" content="Social Media App" />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
       
       {/* Image meta tags */}
       {imageUrl && (
@@ -71,18 +55,12 @@ export default function PostShareMeta({ post }) {
       
       {/* Additional WhatsApp specific tags */}
       <meta property="og:locale" content="en_US" />
-      <meta property="og:updated_time" content={new Date().toISOString()} />
+      <meta property="og:site_name" content="Social Media App" />
       
       {/* Cache busting */}
       <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
       <meta httpEquiv="Pragma" content="no-cache" />
       <meta httpEquiv="Expires" content="0" />
-      
-      {/* Additional meta tags */}
-      <meta property="og:determiner" content="the" />
-      <meta property="og:see_also" content={domain} />
-      <meta property="article:author" content={post.username} />
-      <meta property="article:published_time" content={post.createdAt || new Date().toISOString()} />
     </Helmet>
   );
 }

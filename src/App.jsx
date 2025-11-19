@@ -140,6 +140,27 @@ function App() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Update the sharePost function
+  const sharePost = async (post) => {
+    try {
+      const shareUrl = `https://testing-j9ds6pdvz-yoyomaster12s-projects.vercel.app/post/${post.id}`;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: `Post by ${post.username}`,
+          text: post.content,
+          url: shareUrl,
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
   return (
     <HelmetProvider>
       {posts.length > 0 && (
@@ -231,7 +252,7 @@ function App() {
                   </button>
                   <ShareButton 
                     post={post} 
-                    onShareClick={(post) => setSelectedPost(post)}
+                    onShareClick={sharePost}
                   />
                 </div>
                 

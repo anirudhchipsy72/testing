@@ -1,20 +1,43 @@
 {
   "version": 2,
+  "public": true,
   "builds": [
-    { "src": "server/index.js", "use": "@vercel/node" },
-    { "src": "package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
+    { 
+      "src": "server/index.js", 
+      "use": "@vercel/node" 
+    },
+    { 
+      "src": "package.json", 
+      "use": "@vercel/static-build", 
+      "config": { 
+        "distDir": "dist" 
+      } 
+    }
   ],
   "routes": [
-    { "src": "/post/(?<id>[^/]+)", "dest": "/server" },
-    { "src": "/api/(.*)", "dest": "/server" },
-    { "src": "/uploads/(.*)", "dest": "/server" },
+    { 
+      "src": "/post/(?<id>[^/]+)", 
+      "dest": "/server",
+      "public": true
+    },
+    { 
+      "src": "/api/(.*)", 
+      "dest": "/server" 
+    },
+    { 
+      "src": "/uploads/(.*)", 
+      "dest": "/server",
+      "public": true
+    },
     { 
       "src": "^/static/(.*)",
-      "dest": "/static/$1"
+      "dest": "/static/$1",
+      "public": true
     },
     { 
       "src": "^/assets/(.*)",
-      "dest": "/assets/$1"
+      "dest": "/assets/$1",
+      "public": true
     },
     {
       "src": "^/(.*)",

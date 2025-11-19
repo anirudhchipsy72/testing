@@ -18,30 +18,36 @@
     { 
       "src": "/post/(?<id>[^/]+)", 
       "dest": "/server",
+      "headers": { "Cache-Control": "public, max-age=0, must-revalidate" },
       "public": true
     },
     { 
       "src": "/api/(.*)", 
-      "dest": "/server" 
+      "dest": "/server", 
+      "public": true
     },
     { 
       "src": "/uploads/(.*)", 
       "dest": "/server",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
       "public": true
     },
     { 
       "src": "^/static/(.*)",
       "dest": "/static/$1",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
       "public": true
     },
     { 
       "src": "^/assets/(.*)",
       "dest": "/assets/$1",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
       "public": true
     },
     {
       "src": "^/(.*)",
-      "dest": "/index.html"
+      "dest": "/index.html",
+      "public": true
     }
   ]
 }

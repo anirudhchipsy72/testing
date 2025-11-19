@@ -3,6 +3,9 @@ import { Helmet } from 'react-helmet-async';
 export default function PostShareMeta({ post }) {
   if (!post) return null;
 
+
+  console.log(post,"post")
+
   // Use post content for title (first 60 chars) or fallback
   const title = post.content 
     ? `${post.content.substring(0, 60)}${post.content.length > 60 ? '...' : ''}`

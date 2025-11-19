@@ -10,11 +10,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: false, // Disable sourcemaps for production
-    minify: 'terser', // Enable minification
-    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
-  base: './', // Use relative paths for better compatibility
+  base: './',
   preview: {
     port: 3000,
     open: true,
